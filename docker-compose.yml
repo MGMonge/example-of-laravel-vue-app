@@ -1,0 +1,56 @@
+version: '3'
+services:
+    api:
+        container_name: my-app-api
+        image: webdevops/php-nginx:7.4
+        environment:
+            WEB_DOCUMENT_ROOT: /var/www/public
+        working_dir: /var/www
+        volumes:
+            - ./api:/var/www
+            - ./docker/api/nginx/10-php.conf:/opt/docker/etc/nginx/vhost.common.d/10-php.conf
+        networks:
+            - my-app-net
+        ports:
+            - "8000:80"
+    db:
+        container_name: my-app-api-db
+        image: mysql:5.7
+        environment:
+            MYSQL_DATABASE: my-app
+            MYSQL_USER: my-app
+            MYSQL_PASSWORD: secret
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - my-app-data:/var/lib/mysql
+        networks:
+            - my-app-net
+        ports:
+            - "33060:3306"
+    redis:
+        container_name: my-app-api-redis
+        image: redis:5
+        networks:
+            - my-app-net
+        ports:
+            - "6379:6379"
+    website:
+        container_name: my-app-website
+        build:
+            context: ./docker/website
+        environment:
+            WEB_DOCUMENT_ROOT: /var/www/dist
+            WEB_DOCUMENT_INDEX: index.html
+        working_dir: /var/www
+        volumes:
+            - ./website:/var/www
+        networks:
+            - my-app-net
+        ports:
+            - "8080:80"
+networks:
+    my-app-net:
+        driver: "bridge"
+volumes:
+    my-app-data:
+        driver: "local"
